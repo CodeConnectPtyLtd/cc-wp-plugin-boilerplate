@@ -1,0 +1,70 @@
+name: Deploy to Dev/Production
+
+on:
+  push:
+    branches:
+      - main
+      - 'feature/*'
+      - 'bugfix/*'
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v4
+
+      - name: Create Clean Plugin Zip
+        run: |
+          mkdir build_dist
+          mkdir -p release/${{ github.event.repository.name }}
+          rsync -av . release/${{ github.event.repository.name }}/ --exclude ".git" --exclude ".github" --exclude "info.json" --exclude "build_dist" --exclude "release"
+          cd release && zip -r ../build_dist/${{ github.event.repository.name }}.zip ${{ github.event.repository.name }}
+
+      # Branch Logic for Dev
+      - name: Upload Zip to Dev
+        if: github.ref != 'refs/heads/main'
+        uses: wlixcc/SFTP-Deploy-Action@v1.2.4
+        with:
+          server: ${{ secrets.DEV_SFTP_HOST }}
+          username: ${{ secrets.DEV_SFTP_USER }}
+          password: ${{ secrets.DEV_SFTP_PASS }}
+          local_path: './build_dist/${{ github.event.repository.name }}.zip'
+          remote_path: ${{ secrets.DEV_REMOTE_PATH }}
+          sftp_only: true
+
+      - name: Extract and Cleanup on Dev
+        if: github.ref != 'refs/heads/main'
+        uses: appleboy/ssh-action@v1.0.3
+        with:
+          host: ${{ secrets.DEV_SFTP_HOST }}
+          username: ${{ secrets.DEV_SFTP_USER }}
+          password: ${{ secrets.DEV_SFTP_PASS }}
+          script: |
+            cd "${{ secrets.DEV_REMOTE_PATH }}"
+            mkdir -p "${{ github.event.repository.name }}/" && rm -rf "${{ github.event.repository.name }}/"* && unzip -o "${{ github.event.repository.name }}.zip" && rm "${{ github.event.repository.name }}.zip"
+
+      # Main Branch Logic for Production Distribution
+      - name: Prepare Production Release
+        if: github.ref == 'refs/heads/main'
+        run: cp info.json build_dist/ || echo "{}" > build_dist/info.json
+
+      - name: Create Remote Directory and Upload
+        if: github.ref == 'refs/heads/main'
+        uses: appleboy/ssh-action@v1.0.3
+        with:
+          host: ${{ secrets.PROD_SFTP_HOST }}
+          username: ${{ secrets.PROD_SFTP_USER }}
+          password: ${{ secrets.PROD_SFTP_PASS }}
+          script: mkdir -p "${{ secrets.PROD_REMOTE_PATH }}/${{ github.event.repository.name }}"
+
+      - name: Upload Release Files to Production
+        if: github.ref == 'refs/heads/main'
+        uses: wlixcc/SFTP-Deploy-Action@v1.2.4
+        with:
+          server: ${{ secrets.PROD_SFTP_HOST }}
+          username: ${{ secrets.PROD_SFTP_USER }}
+          password: ${{ secrets.PROD_SFTP_PASS }}
+          local_path: './build_dist/*'
+          remote_path: "${{ secrets.PROD_REMOTE_PATH }}/${{ github.event.repository.name }}"
+          sftp_only: true
