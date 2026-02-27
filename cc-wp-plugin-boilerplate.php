@@ -31,15 +31,22 @@ define( '{{PREFIX}}_URL', plugin_dir_url( __FILE__ ) );
  */
 spl_autoload_register( function ( $class ) {
     $prefix = '{{NAMESPACE}}\\';
-    $base_dir = {{PREFIX}}_PATH . 'includes/';
-
     $len = strlen( $prefix );
+
     if ( strncmp( $prefix, $class, $len ) !== 0 ) {
         return;
     }
 
     $relative_class = substr( $class, $len );
-    $file = $base_dir . str_replace( '\\', '/', $relative_class ) . '.php';
+    
+    // Map namespaces to root folders for Admin and Frontend
+    if ( strpos( $relative_class, 'Admin\\' ) === 0 ) {
+        $file = {{PREFIX}}_PATH . str_replace( '\\', '/', $relative_class ) . '.php';
+    } elseif ( strpos( $relative_class, 'Frontend\\' ) === 0 ) {
+        $file = {{PREFIX}}_PATH . str_replace( '\\', '/', $relative_class ) . '.php';
+    } else {
+        $file = {{PREFIX}}_PATH . 'includes/' . str_replace( '\\', '/', $relative_class ) . '.php';
+    }
 
     if ( file_exists( $file ) ) {
         require $file;
