@@ -1,0 +1,15 @@
+{
+    "name": "{{PLUGIN_NAME}}",
+    "slug": "{{TEXT_DOMAIN}}",
+    "author": "Code Connect",
+    "author_profile": "https://www.codeconnect.com.au/",
+    "version": "1.0.0",
+    "download_url": "https://plugins.code-connect.com.au/wp-content/uploads/plugin-distribution/{{TEXT_DOMAIN}}/{{TEXT_DOMAIN}}.zip",
+    "requires": "6.0",
+    "tested": "9.1",
+    "last_updated": "2026-02-27 10:20:00",
+    "sections": {
+        "description": "{{DESCRIPTION}}",
+        "changelog": "<h4>1.0.0</h4><ul><li>Initial release.</li></ul>"
+    }
+}
