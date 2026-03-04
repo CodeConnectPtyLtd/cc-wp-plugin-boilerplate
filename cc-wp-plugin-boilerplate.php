@@ -62,8 +62,8 @@ add_action( 'plugins_loaded', function() {
         $plugin->init();
     }
 
-    // Initialize Update Checker
-    if ( is_admin() && class_exists( '{{NAMESPACE}}\\Admin\\Update_Checker' ) ) {
+    // Initialize Update Checker (outside is_admin so it runs during WP cron)
+    if ( class_exists( '{{NAMESPACE}}\\Admin\\Update_Checker' ) ) {
         new {{NAMESPACE}}\\Admin\\Update_Checker(
             __FILE__,
             'https://plugins.code-connect.com.au/wp-content/uploads/plugin-distribution/'
